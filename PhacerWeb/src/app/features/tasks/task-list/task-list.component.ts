@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -10,8 +10,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../../core/services/auth.service';
 import { TaskService, TaskResponse } from '../../../core/services/task.service';
+import { TaskFormDialogComponent } from '../task-form-dialog/task-form-dialog.component';
 
 const PRIORITY_LABELS: Record<number, string> = { 0: 'Low', 1: 'Medium', 2: 'High' };
 const COLOR_CLASSES: Record<number, string> = { 0: 'gray', 1: 'red', 2: 'blue', 3: 'green', 4: 'yellow' };
@@ -71,6 +73,9 @@ const COLOR_CLASSES: Record<number, string> = { 0: 'gray', 1: 'red', 2: 'blue', 
                 @if (task.description) {
                   <span class="task-desc">{{ task.description }}</span>
                 }
+                @if (task.dueDate) {
+                  <span class="task-due">Due: {{ task.dueDate | date:'mediumDate' }}</span>
+                }
                 <div class="task-meta">
                   @if (task.tags && task.tags.length) {
                     <mat-chip-set>
@@ -113,6 +118,7 @@ const COLOR_CLASSES: Record<number, string> = { 0: 'gray', 1: 'red', 2: 'blue', 
     .task-body { flex: 1; min-width: 0; }
     .task-title { font-weight: 500; display: block; }
     .task-desc { font-size: 0.875rem; color: var(--mat-sys-on-surface-variant); display: block; margin-top: 0.25rem; }
+    .task-due { font-size: 0.75rem; color: var(--mat-sys-on-surface-variant); display: block; margin-top: 0.25rem; }
     .task-meta { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; }
     .priority { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; }
     .priority.gray { background: #9e9e9e33; }
@@ -134,7 +140,8 @@ export class TaskListComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
-    private taskService: TaskService
+    private taskService: TaskService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -166,30 +173,31 @@ export class TaskListComponent implements OnInit {
   }
 
   openAddDialog() {
-    // TODO: Implement add dialog - for now create inline
-    const title = prompt('Task title:');
-    if (title?.trim()) {
-      this.taskService.create({ title: title.trim() }).subscribe({
-        next: () => this.loadTasks()
-      });
-    }
+    const dialogRef = this.dialog.open(TaskFormDialogComponent, {
+      width: '480px',
+      data: {}
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.taskService.create(result).subscribe({
+          next: () => this.loadTasks()
+        });
+      }
+    });
   }
 
   editTask(task: TaskResponse) {
-    const title = prompt('Edit title:', task.title);
-    if (title !== null && title.trim()) {
-      this.taskService.update(task.id, {
-        title: title.trim(),
-        description: task.description ?? undefined,
-        dueDate: task.dueDate ?? undefined,
-        isCompleted: task.isCompleted,
-        priority: task.priority,
-        color: task.color,
-        tags: task.tags ?? []
-      }).subscribe({
-        next: () => this.loadTasks()
-      });
-    }
+    const dialogRef = this.dialog.open(TaskFormDialogComponent, {
+      width: '480px',
+      data: { task }
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.taskService.update(task.id, { ...result, isCompleted: result.isCompleted ?? task.isCompleted }).subscribe({
+          next: () => this.loadTasks()
+        });
+      }
+    });
   }
 
   deleteTask(task: TaskResponse) {

@@ -22,7 +22,7 @@ public class TaskService : ITaskService
             UserId = userId,
             Title = request.Title.Trim(),
             Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
-            DueDate = request.DueDate,
+            DueDate = ToUtc(request.DueDate),
             Priority = request.Priority,
             Color = request.Color,
             Tags = request.Tags?.Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList() ?? []
@@ -82,7 +82,7 @@ public class TaskService : ITaskService
 
         task.Title = request.Title.Trim();
         task.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
-        task.DueDate = request.DueDate;
+        task.DueDate = ToUtc(request.DueDate);
         task.IsCompleted = request.IsCompleted;
         task.Priority = request.Priority;
         task.Color = request.Color;
@@ -106,6 +106,13 @@ public class TaskService : ITaskService
         await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
+
+    private static DateTime? ToUtc(DateTime? value) =>
+        value.HasValue
+            ? value.Value.Kind == DateTimeKind.Utc
+                ? value
+                : DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+            : null;
 
     private static TaskResponse ToResponse(PhacerTask task) => new()
     {
