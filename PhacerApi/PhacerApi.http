@@ -1,6 +1,59 @@
 @PhacerApi_HostAddress = http://localhost:5036
+@Token = your_jwt_token_here
 
-GET {{PhacerApi_HostAddress}}/weatherforecast/
-Accept: application/json
+### Register
+POST {{PhacerApi_HostAddress}}/api/auth/register
+Content-Type: application/json
 
-###
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### Login
+POST {{PhacerApi_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### Get all tasks (requires Bearer token)
+GET {{PhacerApi_HostAddress}}/api/tasks
+Authorization: Bearer {{Token}}
+
+### Get tasks with filters
+GET {{PhacerApi_HostAddress}}/api/tasks?isCompleted=false&search=test&priority=1&tag=work
+Authorization: Bearer {{Token}}
+
+### Create task
+POST {{PhacerApi_HostAddress}}/api/tasks
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "title": "My first task",
+  "description": "Task description",
+  "priority": 1,
+  "color": 2,
+  "tags": ["work", "urgent"]
+}
+
+### Update task
+PUT {{PhacerApi_HostAddress}}/api/tasks/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "title": "Updated title",
+  "description": "Updated description",
+  "isCompleted": false,
+  "priority": 2,
+  "color": 1,
+  "tags": ["work"]
+}
+
+### Delete task
+DELETE {{PhacerApi_HostAddress}}/api/tasks/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{Token}}
