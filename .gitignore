@@ -1,8 +1,11 @@
 # .NET
 bin/
 obj/
+**/bin/
+**/obj/
 PhacerApi/bin/
 PhacerApi/obj/
+PhacerApi/Debug/
 *.user
 *.suo
 .vs/
